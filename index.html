@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>VibeFX Currency Converter (v1.0.0)</title>
+  
+  <!-- Mobile & PWA Viewport Configuration for Chrome Android -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0c0e17">
+  <meta name="application-name" content="VibeFX">
+  <meta name="description" content="Mobile-first neon currency converter tailored for Chrome on Android with offline rates, haptics, and instant calculation.">
+  
+  <!-- Manifest & Icons -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app" class="app-container">
+    <!-- Top Mobile Header -->
+    <header class="app-header">
+      <div class="header-branding">
+        <div class="logo-mark">
+          <svg viewBox="0 0 32 32" width="22" height="22">
+            <circle cx="16" cy="16" r="14" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-dasharray="4 3"/>
+            <path d="M9 13 A7 7 0 0 1 23 12" fill="none" stroke="#00f2fe" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M23 19 A7 7 0 0 1 9 20" fill="none" stroke="#f43f5e" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="16" cy="16" r="3.5" fill="#10b981"/>
+          </svg>
+        </div>
+        <div class="title-wrap">
+          <h1 class="brand-title">VibeFX</h1>
+          <span class="version-tag">(v1.0.0)</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Live / Offline Status Pill -->
+        <div id="connection-pill" class="status-pill online" title="Status">
+          <span class="status-dot"></span>
+          <span id="connection-text" class="status-text">Live</span>
+        </div>
+
+        <!-- Refresh Rates Button -->
+        <button id="btn-refresh" class="icon-btn" aria-label="Refresh exchange rates" title="Refresh rates">
+          <svg id="refresh-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+        </button>
+
+        <!-- Settings Button -->
+        <button id="btn-open-settings" class="icon-btn" aria-label="Settings" title="Settings">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Chrome Android PWA Install Banner (auto triggers on beforeinstallprompt) -->
+    <div id="pwa-install-banner" class="install-banner hidden">
+      <div class="banner-icon">📲</div>
+      <div class="banner-body">
+        <div class="banner-title">Install on Android</div>
+        <div class="banner-desc">Add VibeFX to Home Screen for fast offline conversion!</div>
+      </div>
+      <button id="btn-install-pwa" class="btn-install">Install</button>
+      <button id="btn-dismiss-install" class="btn-dismiss-banner" aria-label="Dismiss banner">✕</button>
+    </div>
+
+    <!-- Main Converter Scroll Area -->
+    <main class="main-content">
+      <!-- Primary Conversion Glass Card -->
+      <section class="converter-card" aria-label="Currency Converter">
+        <!-- FROM CURRENCY ROW -->
+        <div class="currency-row source-row" id="row-from">
+          <div class="row-header">
+            <span class="row-label">Convert From</span>
+            <div class="input-mode-toggle" id="mode-toggle-wrap">
+              <button id="btn-toggle-keyboard" class="mode-pill active" title="Toggle between on-screen numpad and Android keyboard">
+                <span id="keypad-mode-icon">⌨️</span>
+                <span id="keypad-mode-label">Numpad</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="currency-row-body">
+            <!-- Currency Selector Trigger Button -->
+            <button id="btn-select-from" class="currency-selector-btn" aria-haspopup="dialog" aria-label="Select source currency">
+              <span id="from-flag" class="flag-icon">🇺🇸</span>
+              <div class="code-wrap">
+                <span id="from-code" class="currency-code">USD</span>
+                <span id="from-name" class="currency-subname">US Dollar</span>
+              </div>
+              <svg class="chevron-down" viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
+
+            <!-- Amount Input Display / Native Input -->
+            <div class="amount-input-box">
+              <span id="from-symbol" class="currency-symbol">$</span>
+              <input 
+                id="amount-native-input" 
+                type="text" 
+                inputmode="decimal" 
+                pattern="[0-9]*[.,]?[0-9]*" 
+                class="native-input hidden" 
+                placeholder="0.00"
+                value="100"
+                autocomplete="off"
+              >
+              <div id="amount-keypad-display" class="keypad-display">
+                <div id="math-expression-tape" class="expression-tape"></div>
+                <div id="display-number" class="display-number">100</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SWAP & RATE DIVIDER ROW -->
+        <div class="exchange-divider">
+          <div class="rate-indicator-pill" id="rate-toggle" title="Click to invert rate view">
+            <span class="rate-dot">⚡</span>
+            <span id="rate-ratio-text">1 USD = 0.9245 EUR</span>
+          </div>
+
+          <button id="btn-swap-currencies" class="swap-fab" aria-label="Swap source and target currencies" title="Swap currencies">
+            <svg id="swap-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- TO CURRENCY ROW -->
+        <div class="currency-row target-row" id="row-to">
+          <div class="row-header">
+            <span class="row-label">Converted To</span>
+            <span id="last-updated-hint" class="rate-timestamp">Live Rate</span>
+          </div>
+
+          <div class="currency-row-body">
+            <!-- Currency Selector Trigger Button -->
+            <button id="btn-select-to" class="currency-selector-btn" aria-haspopup="dialog" aria-label="Select target currency">
+              <span id="to-flag" class="flag-icon">🇪🇺</span>
+              <div class="code-wrap">
+                <span id="to-code" class="currency-code">EUR</span>
+                <span id="to-name" class="currency-subname">Euro</span>
+              </div>
+              <svg class="chevron-down" viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
+
+            <!-- Result Box -->
+            <div class="result-display-box" id="result-box" title="Tap to copy result">
+              <span id="to-symbol" class="currency-symbol">€</span>
+              <div id="converted-result" class="result-number">92.45</div>
+            </div>
+          </div>
+
+          <!-- Bottom Action Buttons for Target Row (Copy, Share, Save) -->
+          <div class="conversion-actions-bar">
+            <button id="btn-copy-result" class="action-chip" title="Copy result to clipboard">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span>Copy</span>
+            </button>
+
+            <button id="btn-share-result" class="action-chip" title="Share via Android Share Sheet">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
+              <span>Share</span>
+            </button>
+
+            <button id="btn-save-conversion" class="action-chip" title="Save to History Tape">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <span>Pin</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ON-SCREEN MOBILE TACTILE KEYPAD (Thumb-friendly with math calculations!) -->
+      <section id="tactile-numpad-container" class="keypad-section">
+        <div class="numpad-grid">
+          <!-- Row 1 -->
+          <button class="numpad-btn key-op" data-key="clear" aria-label="All Clear">AC</button>
+          <button class="numpad-btn key-op" data-key="/" aria-label="Divide">÷</button>
+          <button class="numpad-btn key-op" data-key="*" aria-label="Multiply">×</button>
+          <button class="numpad-btn key-op key-backspace" data-key="backspace" aria-label="Backspace">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+              <line x1="18" y1="9" x2="12" y2="15"></line>
+              <line x1="12" y1="9" x2="18" y2="15"></line>
+            </svg>
+          </button>
+
+          <!-- Row 2 -->
+          <button class="numpad-btn key-digit" data-key="7">7</button>
+          <button class="numpad-btn key-digit" data-key="8">8</button>
+          <button class="numpad-btn key-digit" data-key="9">9</button>
+          <button class="numpad-btn key-op" data-key="-" aria-label="Subtract">−</button>
+
+          <!-- Row 3 -->
+          <button class="numpad-btn key-digit" data-key="4">4</button>
+          <button class="numpad-btn key-digit" data-key="5">5</button>
+          <button class="numpad-btn key-digit" data-key="6">6</button>
+          <button class="numpad-btn key-op" data-key="+" aria-label="Add">+</button>
+
+          <!-- Row 4 -->
+          <button class="numpad-btn key-digit" data-key="1">1</button>
+          <button class="numpad-btn key-digit" data-key="2">2</button>
+          <button class="numpad-btn key-digit" data-key="3">3</button>
+          <button class="numpad-btn key-op key-equals" data-key="=" aria-label="Calculate">=</button>
+
+          <!-- Row 5 -->
+          <button class="numpad-btn key-digit key-zero" data-key="0">0</button>
+          <button class="numpad-btn key-digit" data-key="00">00</button>
+          <button class="numpad-btn key-digit" data-key=".">.</button>
+          <button class="numpad-btn key-action" data-key="quick-max" id="btn-quick-100" title="Quick 100">100</button>
+        </div>
+      </section>
+
+      <!-- MULTI-CURRENCY WATCHLIST / PORTFOLIO -->
+      <section class="section-card watchlist-section">
+        <div class="section-header">
+          <div class="section-title-wrap">
+            <h2 class="section-title">Live Watchlist</h2>
+            <span class="section-badge">Real-time</span>
+          </div>
+          <button id="btn-edit-watchlist" class="btn-text-action" aria-label="Customize Watchlist">+ Add</button>
+        </div>
+
+        <div id="watchlist-grid" class="watchlist-grid">
+          <!-- Dynamically populated via JS -->
+        </div>
+      </section>
+
+      <!-- RECENT CONVERSIONS / HISTORY TAPE -->
+      <section class="section-card history-section">
+        <div class="section-header">
+          <div class="section-title-wrap">
+            <h2 class="section-title">Recent History</h2>
+            <span id="history-count" class="section-badge">0</span>
+          </div>
+          <button id="btn-clear-history" class="btn-text-action danger" aria-label="Clear history">Clear</button>
+        </div>
+
+        <div id="history-list" class="history-list">
+          <div class="empty-state-card">
+            <span>No saved conversions yet. Tap the pin or convert to track your exchanges.</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- CURRENCY SELECTION MODAL (Bottom Sheet / Fullscreen Drawer) -->
+    <div id="currency-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-sheet">
+        <div class="sheet-drag-handle"></div>
+
+        <div class="modal-header">
+          <h2 id="modal-title" class="modal-title">Select Currency</h2>
+          <button id="btn-close-modal" class="btn-close-modal" aria-label="Close currency selector">✕</button>
+        </div>
+
+        <!-- Search Bar with instant filter -->
+        <div class="search-box-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input 
+            type="search" 
+            id="currency-search-input" 
+            class="currency-search-input" 
+            placeholder="Search code, currency, or country (e.g. JPY, Yen, Japan)..."
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+          >
+          <button id="btn-clear-search" class="clear-search-btn hidden">✕</button>
+        </div>
+
+        <!-- Category Filter Tabs -->
+        <div class="filter-chips-scroller">
+          <button class="filter-chip active" data-filter="all">All (160+)</button>
+          <button class="filter-chip" data-filter="popular">Popular</button>
+          <button class="filter-chip" data-filter="americas">Americas</button>
+          <button class="filter-chip" data-filter="europe">Europe</button>
+          <button class="filter-chip" data-filter="asia">Asia-Pacific</button>
+          <button class="filter-chip" data-filter="middle-east">Middle East</button>
+          <button class="filter-chip" data-filter="africa">Africa</button>
+          <button class="filter-chip" data-filter="crypto">Crypto</button>
+        </div>
+
+        <!-- Scrollable Currency List -->
+        <div id="modal-currency-list" class="currency-scroll-list" role="listbox">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settings-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <div class="modal-sheet">
+        <div class="sheet-drag-handle"></div>
+
+        <div class="modal-header">
+          <h2 id="settings-title" class="modal-title">Preferences & Tools</h2>
+          <button id="btn-close-settings" class="btn-close-modal" aria-label="Close settings">✕</button>
+        </div>
+
+        <div class="settings-content">
+          <!-- Decimals Selection -->
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-name">Decimal Precision</span>
+              <span class="setting-desc">Number of decimal places displayed</span>
+            </div>
+            <select id="select-decimals" class="setting-select">
+              <option value="2">2 Decimals (Standard)</option>
+              <option value="3">3 Decimals</option>
+              <option value="4">4 Decimals (Forex)</option>
+            </select>
+          </div>
+
+          <!-- Vibration Haptics Toggle -->
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-name">Haptic Vibration</span>
+              <span class="setting-desc">Tactile clicks on Android touch</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-haptics" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Force Rates Update -->
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-name">Live Rates Feed</span>
+              <span id="settings-rate-info" class="setting-desc">Source: open.er-api.com (160+ pairs)</span>
+            </div>
+            <button id="btn-settings-update-rates" class="btn-pill-action">Update Now</button>
+          </div>
+
+          <!-- Offline Cache Info -->
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-name">Offline Mode</span>
+              <span class="setting-desc">Service Worker v1.0.0 active</span>
+            </div>
+            <span class="badge-success">Ready Offline</span>
+          </div>
+
+          <!-- About / Version -->
+          <div class="about-box">
+            <div class="about-brand">VibeFX Currency Converter (v1.0.0)</div>
+            <div class="about-sub">Mobile-First Progressive Web App for Chrome Android</div>
+            <div class="about-credits">ChillVibez Studios &bull; Real-time CORS Exchange Feed</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast" class="toast hidden" role="status" aria-live="polite">
+      <span id="toast-message">Copied to clipboard!</span>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
