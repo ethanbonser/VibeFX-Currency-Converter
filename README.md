@@ -2,6 +2,9 @@
 
 A sleek, cozy-neon Progressive Web App (PWA) currency converter purpose-built for **Google Chrome on Android**. 
 
+🌐 **Live Permanent URL on GitHub Pages**:  
+👉 **[https://ethanbonser.github.io/VibeFX-Currency-Converter/](https://ethanbonser.github.io/VibeFX-Currency-Converter/)**
+
 Engineered with mobile-first ergonomics, full offline caching, Android haptic feedback, native Web Share sheet integration, an on-screen tactile math keypad, and real-time live exchange rate feeds covering **160+ world currencies**.
 
 ---
