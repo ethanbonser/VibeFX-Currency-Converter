@@ -111,3 +111,12 @@ To make your currency converter accessible anywhere in the world:
 ## 📝 License & Credits
 Developed by ChillVibez Studios &bull; Version (v1.0.0).
 Free to use and modify for personal and travel finance!
+
+---
+
+## 👤 Author & Studio
+
+**Ethan Tyler Bonser of ChillVibez Studios/Labs**  
+- **Author**: Ethan Tyler Bonser  
+- **Studio**: ChillVibez Studios & ChillVibez Labs  
+- **Repository**: Private Repository
